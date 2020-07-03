@@ -21,9 +21,6 @@ model.load_weights("modelo/melhor_peso.best.hdf5")
 
 # Criação da API em Flask
 app = Flask(__name__)
-@app.route("/", methods=["GET"])
-def index():
-    return "<h1>Hello World!</h1>"
 
 # Função para classificação de imagens
 @app.route("/<string:img_name>", methods = ["POST", "GET"])
