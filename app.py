@@ -12,15 +12,18 @@ import tensorflow as tf
 import cv2
 from flask import Flask, request, jsonify
 #Carregamento do modelo pré-treinado
-with open("modelo\modelo.json", "r") as f:
+with open("modelo/modelo.json", "r") as f:
     model_json = f.read()
 
 model = tf.keras.models.model_from_json(model_json)
-model.load_weights("modelo\melhor_peso.best.hdf5")
+model.load_weights("modelo/melhor_peso.best.hdf5")
 #model.summary()
 
 # Criação da API em Flask
 app = Flask(__name__)
+@app.route("/", methods=["GET"])
+def index():
+    return "<h1>Hello World!</h1>"
 
 # Função para classificação de imagens
 @app.route("/<string:img_name>", methods = ["POST", "GET"])
