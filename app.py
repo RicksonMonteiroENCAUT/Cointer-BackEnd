@@ -27,6 +27,7 @@ app = Flask(__name__)
 def classify_image(img_name):
     results=[]
     money=0
+    img_name= get_image(img_name)
     upload_dir = "uploads/"
     classes = [0.01, 0.01, 0.05, 0.1, 0.25]
     read = cv2.imread(upload_dir + img_name)
@@ -44,7 +45,15 @@ def classify_image(img_name):
     else:
         return jsonify({"Sorry! ": 'We have a problem'})
         
-  
+#Baixar_Imagem
+def get_image(img_name):
+    url='http://cointer.projetoscomputacao.com.br/api_php/upload/imagens/'+ img_name
+    filename = url.split('/')[-1]
+    r = requests.get(url, headers={"User-Agent": "XY"})
+    with open('uploads/'+filename,'wb') as f:
+        f.write(r.content)
+    return filename if r.status_code==200 else'Erro 406'
+
 
 #Função de Segmentação
 def image_segmentation(image):
