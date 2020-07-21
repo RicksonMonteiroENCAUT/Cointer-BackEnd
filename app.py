@@ -23,7 +23,7 @@ model.load_weights("modelo/melhor_peso.best.hdf5")
 app = Flask(__name__)
 
 # Função para classificação de imagens
-@app.route("/<string:img_name>", methods = ["POST", "GET"])
+@app.route("/<string:img_name>", methods = ["POST","GET"])
 def classify_image(img_name):
     results=[]
     money=0
@@ -34,17 +34,21 @@ def classify_image(img_name):
     try:
         imagens_cortadas=image_segmentation(read)
         for img in imagens_cortadas:
-            image=cv2.resize(img, (128,128))/255.0
+            image=cv2.resize(img, (128,128),cv2.INTER_AREA)/255.0
             results.append(np.argmax(model.predict(image.reshape(1,128,128,3))))
         for i in results:
             money += classes[i]
-        return jsonify({"Total ": money})
+        return jsonify({"Total "+str(len(results))+" moedas": str(money) +"$"})
     except:
-        image=cv2.resize(read, (128,128))/255.0
+        image=cv2.resize(read, (128,128),cv2.INTER_AREA)/255.0
         return jsonify({"Total ": classes[np.argmax(model.predict(image.reshape(1,128,128,3)))]})
     else:
         return jsonify({"Sorry! ": 'We have a problem'})
-        
+
+@app.route('/favicon.ico')
+def favicon():
+    return app.send_static_file('favicon.ico')        
+
 #Baixar_Imagem
 def get_image(img_name):
     url='http://cointer.projetoscomputacao.com.br/api_php/upload/imagens/'+ img_name
@@ -52,18 +56,17 @@ def get_image(img_name):
     r = requests.get(url, headers={"User-Agent": "XY"})
     with open('uploads/'+filename,'wb') as f:
         f.write(r.content)
-    return filename if r.status_code==200 else'Erro 406'
-
+    return filename 
 
 #Função de Segmentação
 def image_segmentation(image):
     imagens_cortadas=[]
     gray=cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blur=cv2.GaussianBlur(gray,(7,7),cv2.BORDER_DEFAULT)
+    blur=cv2.GaussianBlur(gray,(9,9),cv2.BORDER_DEFAULT)
     all_circs=cv2.HoughCircles(blur, cv2.HOUGH_GRADIENT,
-                               0.9, 120, param1=50,
-                               param2= 30, minRadius=80,
-                               maxRadius=150)
+                               0.9, 300, param1=50,
+                               param2= 25, minRadius=270,
+                               maxRadius=350)
     all_circs=np.uint16(np.around(all_circs))
     for corte in (all_circs[0]):
         crop= image[corte[1]-corte[2]:corte[1]+corte[2], corte[0]-corte[2]:corte[0]+corte[2]]
