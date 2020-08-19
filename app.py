@@ -21,16 +21,15 @@ model.load_weights("modelo/melhor_peso.best.hdf5")
 
 # Criação da API em Flask
 app = Flask(__name__)
-
 # Função para classificação de imagens
 @app.route("/<string:img_name>", methods = ["POST","GET"])
 def classify_image(img_name):
     results=[]
     money=0
-    img_name= get_image(img_name)
-    upload_dir = "uploads/"
+    read= get_image(img_name)
+    #upload_dir = "uploads/"
     classes = [0.01, 0.01, 0.05, 0.1, 0.25]
-    read = cv2.imread(upload_dir + img_name)
+    #read = cv2.imread(upload_dir + img_name)
     try:
         imagens_cortadas=image_segmentation(read)
         for img in imagens_cortadas:
@@ -49,14 +48,13 @@ def classify_image(img_name):
 def favicon():
     return app.send_static_file('favicon.ico')        
 
-#Baixar_Imagem
+#Ler_Imagem
 def get_image(img_name):
-    url='http://cointer.projetoscomputacao.com.br/api_php/upload/imagens/'+ img_name
-    filename = url.split('/')[-1]
-    r = requests.get(url, headers={"User-Agent": "XY"})
-    with open('uploads/'+filename,'wb') as f:
-        f.write(r.content)
-    return filename 
+    url = 'http://cointer.projetoscomputacao.com.br/api_php/upload/imagens/'+img_name
+    resp = requests.get(url, stream=True, headers={"User-Agent": "XY"}).raw
+    image = np.asarray(bytearray(resp.read()), dtype="uint8")
+    image = cv2.imdecode(image, cv2.IMREAD_COLOR)
+    return image 
 
 #Função de Segmentação
 def image_segmentation(image):
