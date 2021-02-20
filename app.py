@@ -56,9 +56,13 @@ def get_image(img_name):
     image = cv2.imdecode(image, cv2.IMREAD_COLOR)
     return image 
 
-#Função de Segmentação
+'''#Função de Segmentação v1
 def image_segmentation(image):
     imagens_cortadas=[]
+    h, w = image.shape[:2]
+    w = int(0.2 * w)
+    h = int(0.2 * h)
+    image = cv2.resize(image, (w, h), interpolation=cv2.INTER_AREA)
     gray=cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blur=cv2.GaussianBlur(gray,(9,9),cv2.BORDER_DEFAULT)
     all_circs=cv2.HoughCircles(blur, cv2.HOUGH_GRADIENT,
@@ -69,6 +73,32 @@ def image_segmentation(image):
     for corte in (all_circs[0]):
         crop= image[corte[1]-corte[2]:corte[1]+corte[2], corte[0]-corte[2]:corte[0]+corte[2]]
         imagens_cortadas.append(crop)
+    return imagens_cortadas'''
+
+#Função de Segmentação V2!
+def image_segmentation(img):
+    imagens_cortadas = []
+    h, w = img.shape[:2]
+    w = int(0.2 * w)
+    h = int(0.2 * h)
+    resized = cv2.resize(img, (w, h), interpolation=cv2.INTER_AREA)
+    gray=cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
+    thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+    median = cv2.medianBlur(thresh, 7)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    close = cv2.morphologyEx(median, cv2.MORPH_CLOSE, kernel, iterations=1)
+    dilate = cv2.morphologyEx(close, cv2.MORPH_DILATE, kernel, iterations=1)
+    blur = cv2.GaussianBlur(dilate, (15, 15), 0)
+    mask = cv2.threshold(blur, 90, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+    all_circs = cv2.HoughCircles(mask, cv2.HOUGH_GRADIENT,
+                                 0.9, 50, param1=50,
+                                 param2=25, minRadius=0,
+                                 maxRadius=0)
+    all_circs = np.uint16(np.around(all_circs))
+    for corte in (all_circs[0]):
+        crop = resized[corte[1] - corte[2]:corte[1] + corte[2], corte[0] - corte[2]:corte[0] + corte[2]]
+        imagens_cortadas.append(crop)
+
     return imagens_cortadas
 
 # Iniciando a aplicação Flask
